@@ -87,6 +87,8 @@ void BlobStorageLogElement::appendToBlock(MutableColumns & columns) const
 }
 
 
+#if USE_AWS_S3
+
 void BlobStorageLogWriter::addEvent(
     BlobStorageLogElement::EventType event_type,
     const String & bucket,
@@ -96,7 +98,6 @@ void BlobStorageLogWriter::addEvent(
     const Aws::S3::S3Error * error,
     BlobStorageLogElement::EvenTime time_now)
 {
-#if USE_AWS_S3
 
     if (!log)
         return;
@@ -130,8 +131,24 @@ void BlobStorageLogWriter::addEvent(
     element.event_time = time_now;
 
     log->add(element);
-#endif
 }
+
+#else
+
+void BlobStorageLogWriter::addEvent(
+    BlobStorageLogElement::EventType,
+    const String &,
+    const String &,
+    const String &,
+    size_t,
+    const Aws::S3::S3Error *,
+    BlobStorageLogElement::EvenTime)
+{
+    UNUSED(log);
+}
+
+#endif
+
 
 }
 
