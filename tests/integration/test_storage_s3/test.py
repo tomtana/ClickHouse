@@ -128,7 +128,7 @@ def run_query(instance, query, *args, **kwargs):
     ],
 )
 def test_put(started_cluster, maybe_auth, positive, compression):
-    # type: (ClickHouseCluster) -> None
+    # type: (ClickHouseCluster, str, bool, str) -> None
 
     bucket = (
         started_cluster.minio_bucket
@@ -883,8 +883,8 @@ def test_storage_s3_put_uncompressed(started_cluster):
     result = instance.query(
         f"""SELECT
             countIf(event_type == 'Upload'),
-            countIf(remote_path == {filename}),
-            countIf(bucket == {bucket}),
+            countIf(remote_path == '{filename}'),
+            countIf(bucket == '{bucket}'),
             count()
         FROM system.blob_storage_log WHERE query_id = '{insert_query_id}'"""
     )
