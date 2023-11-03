@@ -404,8 +404,6 @@ private:
     std::optional<FormatSettings> format_settings;
     ASTPtr partition_by;
 
-    BlobStorageLogWriter blob_storage_log;
-
     static std::shared_ptr<StorageS3Source::IIterator> createFileIterator(
         const Configuration & configuration,
         bool distributed_processing,

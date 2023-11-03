@@ -192,8 +192,6 @@ private:
 
     Poco::Logger * log;
     DataSourceDescription data_source_description;
-
-    BlobStorageLogWriter blob_storage_log;
 };
 
 /// Do not encode keys, store as-is, and do not require separate disk for metadata.

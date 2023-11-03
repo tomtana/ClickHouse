@@ -247,8 +247,8 @@ std::unique_ptr<WriteBufferFromFileBase> S3ObjectStorage::writeObject( /// NOLIN
 
     auto clients_ = clients.get();
 
-    BlobStorageLogWriter blob_storage_log_writer = getBlobStorageLog();
-    blob_storage_log_writer.local_path = object.local_path;
+    BlobStorageLogWriter blob_storage_log = getBlobStorageLog();
+    blob_storage_log.local_path = object.local_path;
 
     return std::make_unique<WriteBufferFromS3>(
         clients_->client,
@@ -257,7 +257,7 @@ std::unique_ptr<WriteBufferFromFileBase> S3ObjectStorage::writeObject( /// NOLIN
         object.remote_path,
         buf_size,
         settings_ptr->request_settings,
-        std::move(blob_storage_log_writer),
+        std::move(blob_storage_log),
         attributes,
         std::move(scheduler),
         disk_write_settings);
@@ -351,7 +351,7 @@ void S3ObjectStorage::removeObjectsImpl(const StoredObjects & objects, bool if_e
         size_t chunk_size_limit = settings_ptr->objects_chunk_size_to_delete;
         size_t current_position = 0;
 
-        auto blob_storage_log_writer = getBlobStorageLog();
+        auto blob_storage_log = getBlobStorageLog();
         while (current_position < objects.size())
         {
             std::vector<Aws::S3::Model::ObjectIdentifier> current_chunk;
@@ -381,7 +381,7 @@ void S3ObjectStorage::removeObjectsImpl(const StoredObjects & objects, bool if_e
             auto time_now = std::chrono::system_clock::now();
             for (const auto & object : objects)
             {
-                blob_storage_log_writer.addEvent(BlobStorageLogElement::EventType::Delete,
+                blob_storage_log.addEvent(BlobStorageLogElement::EventType::Delete,
                                                  bucket, object.remote_path, object.local_path, 0,
                                                  outcome_error, time_now);
             }
@@ -548,26 +548,21 @@ std::unique_ptr<IObjectStorage> S3ObjectStorage::cloneObjectStorage(
         endpoint, disk_name);
 }
 
+
 BlobStorageLogWriter S3ObjectStorage::getBlobStorageLog()
 {
-
 #ifndef CLICKHOUSE_KEEPER_STANDALONE_BUILD /// Keeper standalone build doesn't have context
-
-    /// We try to set blob_storage_log at first attempt to access
-    /// because during disk startup system logs are not yet initialized
-    if (!blob_storage_log.isInitialized())
-    {
-        blob_storage_log = BlobStorageLogWriter(Context::getGlobalContextInstance()->getBlobStorageLog());
-        blob_storage_log.disk_name = disk_name;
-    }
-#endif
-
     /// Make a copy with local properties like query_id, object path, etc
-    BlobStorageLogWriter blob_storage_log_copy(blob_storage_log);
-    if (CurrentThread::isInitialized() && CurrentThread::get().getQueryContext())
-        blob_storage_log_copy.query_id = CurrentThread::getQueryId();
+    BlobStorageLogWriter blob_storage_log(Context::getGlobalContextInstance()->getBlobStorageLog());
+    blob_storage_log.disk_name = disk_name;
 
-    return blob_storage_log_copy;
+    if (CurrentThread::isInitialized() && CurrentThread::get().getQueryContext())
+        blob_storage_log.query_id = CurrentThread::getQueryId();
+
+    return blob_storage_log;
+#else
+    return {};
+#endif
 }
 
 S3ObjectStorage::Clients::Clients(std::shared_ptr<S3::Client> client_, const S3ObjectStorageSettings & settings)

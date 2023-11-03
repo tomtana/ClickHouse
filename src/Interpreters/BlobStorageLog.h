@@ -88,7 +88,6 @@ public:
     String query_id;
     String local_path;
 
-    bool operator==(const BlobStorageLogWriter & other) const;
 
 private:
     BlobStorageLogPtr log;

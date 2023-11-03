@@ -76,7 +76,6 @@ private:
     std::atomic<bool> mv_attached = false;
     std::atomic<bool> shutdown_called = false;
 
-    BlobStorageLogWriter blob_storage_log;
     Poco::Logger * log;
 
     void startup() override;

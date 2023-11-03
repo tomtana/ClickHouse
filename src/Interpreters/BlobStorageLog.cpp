@@ -131,13 +131,6 @@ void BlobStorageLogWriter::addEvent(
     log->add(element);
 }
 
-bool BlobStorageLogWriter::operator==(const BlobStorageLogWriter & other) const
-{
-    return log.get() == other.log.get()
-        && disk_name == other.disk_name
-        && query_id == other.query_id
-        && local_path == other.local_path;
-}
 
 #endif
 
